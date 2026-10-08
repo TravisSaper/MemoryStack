@@ -1,0 +1,12 @@
+# Personal memory data - never commit
+memories.json
+memory_index.faiss
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store

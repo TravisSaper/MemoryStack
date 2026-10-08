@@ -1,0 +1,4 @@
+faiss-cpu
+numpy
+sentence-transformers
+mcp>=2
