@@ -49,23 +49,24 @@ class VectorStore:
         scores, indices = self.index.search(vector, k)
         results = []
         for score, idx in zip(scores[0], indices[0]):
-            if idx == -1 or idx >= len(self.memories):
+            if idx == -1 or idx >= len(self.memories): 
                 continue
             results.append({"memory": self.memories[idx], "score": float(score)})
     
         return results
 
-    def delete_memory(self, memory_id: str):
-        remaining = [memory for memory in self.memories if memory.id != memory_id]
+    def delete_memory(self, memory_id):
+        remaining = [m for m in self.memories if m.id != memory_id]
         if len(remaining) == len(self.memories):
             return False
         self.memories = remaining
+        #rebuild idx
         self.index = faiss.IndexFlatIP(self.dimension)
         if self.memories:
-            vectors = np.asarray([memory.embedding for memory in self.memories], dtype=np.float32)
-            self.index.add(vectors)
+            self.index.add(np.asarray([m.embedding for m in self.memories], dtype=np.float32))
         self.save()
         return True
+        
 
     def save(self):
         faiss.write_index(self.index, self.index_path)
@@ -90,13 +91,10 @@ def importance_value(value):
         raise argparse.ArgumentTypeError("importance must be between 0.0 and 1.0")
     return value
 
-
-def format_memory(memory: Memory, score: Optional[float] = None):
+def format_memory(memory, score=None):
     prefix = f"[{score:.3f}] " if score is not None else ""
-    return (
-        f"{prefix}{memory.id} | {memory.category} | "
-        f"importance={memory.importance:.2f} | {memory.content}"
-    )
+    return f"{prefix}{memory.id} | {memory.category} | importance={memory.importance:.2f} | {memory.content}"
+
 
 
 def main():
@@ -104,16 +102,16 @@ def main():
     parser.add_argument("--mode", choices=["add", "search", "list", "delete"], required=True, help="Memory operation")
     parser.add_argument("--text", help="Memory text")
     parser.add_argument("--id", help="Memory ID")
-    parser.add_argument("--category", help="Memory category, e.g. preference, personal, project, skill")
-    parser.add_argument("--importance", type=importance_value, default=0.5, help="Importance from 0.0 to 1.0")
-    parser.add_argument("-k", type=int, default=5, help="Number of search results")
+    parser.add_argument("--category", help="Memory category")
+    parser.add_argument("--importance", type=importance_value, default=0.5, help="Importance 0.0 to 1.0")
+    parser.add_argument("-k", type=int, default=5, help="Number of results")
     args = parser.parse_args()
     store = VectorStore()
-
+    
     if args.mode == "add":
         if not args.text:
             parser.error("--text is required for add")
-
+            
         memory = Memory(
             id=str(uuid.uuid4()),
             content=args.text,
@@ -121,36 +119,33 @@ def main():
             importance=args.importance,
             timestamp=datetime.now().isoformat()
         )
-
+        
         store.add_memory(memory)
         print(f"done {memory.id}")
-
+    
     elif args.mode == "search":
         if not args.text:
             parser.error("--text is required for search")
-
-        results = store.search_similar(args.text, k=args.k)
-
-        for result in results:
+        
+        for result in store.search_similar(args.text, k=args.k):
             print(format_memory(result["memory"], result["score"]))
-
+    
     elif args.mode == "list":
-        memories = store.memories
+        mems = store.memories
+        #filter cat
         if args.category:
-            memories = [memory for memory in memories if memory.category == args.category.strip().lower()]
-
-        for memory in memories:
-            print(format_memory(memory))
-
+            mems = [m for m in mems if m.category == args.category.strip().lower()]
+        for m in mems:
+            print(format_memory(m))
+    
+    
     elif args.mode == "delete":
         if not args.id:
             parser.error("--id must be there for delete")
-
         if store.delete_memory(args.id):
             print("Memory deleted.")
         else:
             print(f"No memory found with id {args.id}")
-
 
 if __name__ == "__main__":
     main()
