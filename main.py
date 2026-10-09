@@ -8,6 +8,7 @@ import os
 import argparse
 import uuid
 from datetime import datetime
+
 file_path = os.path.dirname(os.path.abspath(__file__))
 ind = file_path + "/memory_index.faiss"
 mmp = file_path + "/memories.json"
@@ -24,8 +25,8 @@ class Memory:
 
 class VectorStore:
     def __init__(self, index_path=ind, memories_path=mmp):
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
-        self.dimension = 384
+        self.model = SentenceTransformer('all-mpnet-base-v2')
+        self.dimension = 768
         self.index_path = index_path
         self.memories_path = memories_path
         self.index = faiss.IndexFlatIP(self.dimension)  
