@@ -1,6 +1,8 @@
 # Personal memory data - never commit
 memories.json
 memory_index.faiss
+memories.json.lock
+memories.json.tmp
 
 # Python
 .venv/
