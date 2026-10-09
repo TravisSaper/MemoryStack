@@ -14,7 +14,7 @@ Use it two ways:
 Requires Python 3.10+.
 
 ```bash
-git clone https://github.com/<you>/MemoryStack.git
+git clone https://github.com/TravisSaper/MemoryStack.git
 cd MemoryStack
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
